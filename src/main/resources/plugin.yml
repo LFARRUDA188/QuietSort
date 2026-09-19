@@ -1,0 +1,19 @@
+name: QuietSort
+version: '${version}'
+main: io.github.lfarruda188.quietsort.QuietSortPlugin
+api-version: '1.21'
+author: LFARRUDA188
+description: Sorts chests and the player backpack automatically on close. No GUI, no hotkeys, hotbar-safe.
+website: https://github.com/LFARRUDA188/QuietSort
+commands:
+  quietsort:
+    description: Toggle automatic sorting for yourself
+    usage: /quietsort  |  /quietsort reload
+    aliases: [qsort]
+permissions:
+  quietsort.use:
+    description: Allows automatic sorting to act for this player
+    default: true
+  quietsort.admin:
+    description: Allows reloading the configuration
+    default: op

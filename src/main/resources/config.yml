@@ -1,0 +1,14 @@
+# QuietSort
+
+# Sort chests, barrels and shulker boxes when closed
+sort-containers: true
+
+# Sort the player backpack (slots 9-35) when the player closes their own inventory.
+# The HOTBAR (slots 0-8), ARMOR and OFF-HAND are NEVER touched.
+sort-player-inventory: true
+
+# Also sort the ender chest
+sort-ender-chest: true
+
+# Also sort the backpack when closing a container (default: no)
+sort-player-inventory-on-container-close: false
