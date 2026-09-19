@@ -19,6 +19,7 @@ public class TestSorter {
         testEmptyIsNoop();
         testUnstackablesPreserved();
         testDifferentMetaNotMerged();
+        testAlreadySortedIsNotRewritten();
         testRandomizedFuzz();
 
         System.out.println();
@@ -87,12 +88,12 @@ public class TestSorter {
     }
 
     static void testOverflowIsRefused() {
-        // Caso normal: 3 itens unicos em 3 slots cabem.
+        // Caso normal: 3 itens fora de ordem em 3 slots cabem.
         ItemStack[] inv = new ItemStack[3];
-        inv[0] = new ItemStack(Material.DIAMOND_SWORD, 1, "a");
-        inv[1] = new ItemStack(Material.DIAMOND_SWORD, 1, "b");
-        inv[2] = new ItemStack(Material.DIAMOND_SWORD, 1, "c");
-        check("3 itens unicos em 3 slots cabem", ItemSorter.sortRegion(inv, 0, 3) != null);
+        inv[0] = new ItemStack(Material.BREAD, 5);
+        inv[1] = new ItemStack(Material.DIAMOND_SWORD, 1);
+        inv[2] = new ItemStack(Material.COBBLESTONE, 10);
+        check("3 itens fora de ordem em 3 slots cabem", ItemSorter.sortRegion(inv, 0, 3) != null);
 
         // Caso anormal: pilha maior que o limite do item (200 pedras num slot).
         // Ao normalizar viraria 64+64+64+8 = 4 slots, e so existem 2.
@@ -113,17 +114,46 @@ public class TestSorter {
 
     static void testUnstackablesPreserved() {
         ItemStack[] inv = new ItemStack[10];
-        inv[0] = new ItemStack(Material.DIAMOND_SWORD, 1, "sword-alpha");
-        inv[1] = new ItemStack(Material.DIAMOND_SWORD, 1, "sword-beta");
+        inv[9] = new ItemStack(Material.DIAMOND_SWORD, 1, "sword-alpha");
+        inv[4] = new ItemStack(Material.DIAMOND_SWORD, 1, "sword-beta");
         ItemStack[] out = ItemSorter.sortRegion(inv, 0, 10);
         check("2 espadas continuam 2 espadas", out != null && count(out) == 2);
+    }
+
+    /**
+     * Regressao: inventario que ja esta ordenado nao pode ser reescrito.
+     * Reescrever forcava o Geyser a retraduzir tudo e travava o celular.
+     */
+    static void testAlreadySortedIsNotRewritten() {
+        ItemStack[] inv = new ItemStack[27];
+        inv[7] = new ItemStack(Material.BREAD, 5);
+        inv[2] = new ItemStack(Material.DIAMOND_SWORD, 1);
+        inv[14] = new ItemStack(Material.DIRT, 30);
+        inv[0] = new ItemStack(Material.COBBLESTONE, 64);
+
+        ItemStack[] first = ItemSorter.sortRegion(inv, 0, 27);
+        check("primeira passada organiza", first != null);
+        if (first == null) return;
+
+        ItemStack[] second = ItemSorter.sortRegion(first, 0, 27);
+        check("segunda passada NAO reescreve (retorna null)", second == null);
+
+        // E o mesmo vale para a regiao da mochila
+        ItemStack[] bag = new ItemStack[36];
+        bag[0] = new ItemStack(Material.DIAMOND_SWORD, 1);
+        bag[20] = new ItemStack(Material.DIRT, 10);
+        bag[11] = new ItemStack(Material.COBBLESTONE, 5);
+        ItemStack[] pass1 = ItemSorter.sortRegion(bag, 9, 36);
+        check("mochila: primeira passada organiza", pass1 != null);
+        if (pass1 == null) return;
+        check("mochila: segunda passada NAO reescreve", ItemSorter.sortRegion(pass1, 9, 36) == null);
     }
 
     static void testDifferentMetaNotMerged() {
         // itens com meta diferente (encantamento/nome) nunca podem fundir
         ItemStack[] inv = new ItemStack[10];
-        inv[0] = new ItemStack(Material.STONE, 10, "normal");
-        inv[1] = new ItemStack(Material.STONE, 10, "renomeada");
+        inv[5] = new ItemStack(Material.STONE, 10, "normal");
+        inv[2] = new ItemStack(Material.STONE, 10, "renomeada");
         ItemStack[] out = ItemSorter.sortRegion(inv, 0, 10);
         check("metas diferentes nao fundem", out != null && count(out) == 2);
         if (out != null) {

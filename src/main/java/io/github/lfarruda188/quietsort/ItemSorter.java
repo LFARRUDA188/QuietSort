@@ -84,7 +84,36 @@ public final class ItemSorter {
             return null;
         }
 
+        // 7. Se o resultado e igual ao que ja estava la, nao ha o que gravar.
+        //    Isso importa muito no Bedrock: reescrever o inventario obriga o
+        //    Geyser a retraduzir todos os itens para o cliente, e sem esta
+        //    checagem isso acontecia a cada fechamento, mesmo sem mudanca.
+        if (sameRegion(original, result, from, to)) {
+            return null;
+        }
+
         return result;
+    }
+
+    /** Compara duas regioes slot a slot (tipo, metadados e quantidade). */
+    static boolean sameRegion(ItemStack[] a, ItemStack[] b, int from, int to) {
+        for (int i = from; i < to; i++) {
+            ItemStack x = a[i];
+            ItemStack y = b[i];
+            if (x == null || x.getType() == Material.AIR) {
+                if (y != null && y.getType() != Material.AIR) {
+                    return false;
+                }
+                continue;
+            }
+            if (y == null || y.getType() == Material.AIR) {
+                return false;
+            }
+            if (x.getAmount() != y.getAmount() || !x.isSimilar(y)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** Soma a quantidade de itens na regiao indicada. */
